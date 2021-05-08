@@ -40,4 +40,6 @@ app.listen(3000, () => {
     console.log('启动成功');
 });
 
+console.log('test');
+
 // nodejs使用的模块化方案是 commonjs（require、module.exports）
