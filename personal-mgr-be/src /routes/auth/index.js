@@ -1,14 +1,17 @@
 const Router = require('@koa/router');
 const mongoose = require('mongoose');
-
 const User = mongoose.model('User');
+const { getBody } = require('../../helpers/utils/index');
+var jwt = require('jsonwebtoken');
+var token = jwt.sign({
+    foo: 'bar'
+}, 'shhhhh');
 
 const router = new Router({
     prefix: '/auth',
 })
 router.post('/register', async (ctx) => {
-    console.log(ctx.request.body);
-    const { account, password } = ctx.request.body;
+    const { account, password } = getBody(ctx);
     const user = new User({
         account,
         password,
@@ -38,7 +41,42 @@ router.post('/register', async (ctx) => {
     }
 });
 router.post('/login', async (ctx) => {
-    ctx.body = '登录成功';
+    const { account, password } = getBody(ctx);
+
+    const one = await User.findOne({
+        account,
+    }).exec();
+
+    if (!one) {
+        ctx.body = {
+            code: 0,
+            message: '用户名或密码错误',
+            data: null,
+        }
+        return;
+    }
+    const user = {
+        account: one.account,
+        _id: one._id,
+    }
+    if(one.password === password) {
+        ctx.body = {
+            code: 1,
+            message: '登录成功',
+            data: {
+                user: user,
+                token: jwt.sign(user, 'personal-mgr')
+            },
+        }
+        return;
+    } else {
+        ctx.body = {
+            code: 0,
+            message: '用户名或密码错误',
+            data: null,
+        }
+        return;
+    }
 });
 
  module.exports = router;
